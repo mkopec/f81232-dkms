@@ -1,2 +1,2 @@
-obj-m := f81232.o
+obj-m := dasharo-acpi.o
 ccflags-y := -Idrivers/usb
