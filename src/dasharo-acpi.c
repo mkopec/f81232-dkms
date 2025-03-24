@@ -103,23 +103,23 @@ static int dasharo_add(struct acpi_device *acpi_dev)
 	pr_info("Dasharo driver capabilities:\n");
 	pr_info("  Temperatures");
 	count = dasharo_get_feature_cap(data, "GFCP", DASHARO_FEATURE_TEMPERATURE, DASHARO_TEMPERATURE_CPU_PACKAGE);
-	if (count) pr_info("    CPU package: %d\n");
+	if (count) pr_info("    CPU package: %d\n", count);
 	count = dasharo_get_feature_cap(data, "GFCP", DASHARO_FEATURE_TEMPERATURE, DASHARO_TEMPERATURE_CPU_CORE);
-	if (count) pr_info("    CPU core: %d\n");
+	if (count) pr_info("    CPU core: %d\n", count);
 	count = dasharo_get_feature_cap(data, "GFCP", DASHARO_FEATURE_TEMPERATURE, DASHARO_TEMPERATURE_GPU);
-	if (count) pr_info("    GPU: %d\n");
+	if (count) pr_info("    GPU: %d\n", count);
 	count = dasharo_get_feature_cap(data, "GFCP", DASHARO_FEATURE_TEMPERATURE, DASHARO_TEMPERATURE_BOARD);
-	if (count) pr_info("    Board: %d\n");
+	if (count) pr_info("    Board: %d\n", count);
 	count = dasharo_get_feature_cap(data, "GFCP", DASHARO_FEATURE_TEMPERATURE, DASHARO_TEMPERATURE_CHASSIS);
-	if (count) pr_info("    Chassis: %d\n");
+	if (count) pr_info("    Chassis: %d\n", count);
 
 	pr_info("  Fan PWM control");
 	count = dasharo_get_feature_cap(data, "GFCP", DASHARO_FEATURE_FAN_PWM, DASHARO_FAN_CPU);
-	if (count) pr_info("    CPU: %d\n");
+	if (count) pr_info("    CPU: %d\n", count);
 	count = dasharo_get_feature_cap(data, "GFCP", DASHARO_FEATURE_FAN_PWM, DASHARO_FAN_GPU);
-	if (count) pr_info("    GPU: %d\n");
+	if (count) pr_info("    GPU: %d\n", count);
 	count = dasharo_get_feature_cap(data, "GFCP", DASHARO_FEATURE_FAN_PWM, DASHARO_FAN_CHASSIS);
-	if (count) pr_info("    Chassis: %d\n");
+	if (count) pr_info("    Chassis: %d\n", count);
 
 	return 0;
 
