@@ -66,114 +66,26 @@ static const struct acpi_device_id device_ids[] = {
 };
 MODULE_DEVICE_TABLE(acpi, device_ids);
 
-/****************************************************************************
- ****************************************************************************
- *
- * ACPI Helpers and device model
- *
- ****************************************************************************
- ****************************************************************************/
-
-/*************************************************************************
- * ACPI basic handles
- */
-
-static acpi_handle root_handle;
-static acpi_handle ec_handle;
-
-#define DSHRACPI_HANDLE(object, parent, paths...)			\
-	static acpi_handle  object##_handle;			\
-	static const acpi_handle * const object##_parent __initconst =	\
-						&parent##_handle; \
-	static char *object##_paths[] __initdata = { paths }
-
-DSHRACPI_HANDLE(gftr, ec, "GFTR");
-DSHRACPI_HANDLE(gfcp, ec, "GFCP");
-
-#define TPACPI_MAX_ACPI_ARGS 3
-/*************************************************************************
- * ACPI helpers
- */
-
-static int acpi_evalf(acpi_handle handle,
-		      int *res, char *method, char *fmt, ...)
+static int dasharo_get_feature_cap(struct dasharo_data *data, char *method, int feat, int cap)
 {
-	char *fmt0 = fmt;
-	struct acpi_object_list params;
-	union acpi_object in_objs[TPACPI_MAX_ACPI_ARGS];
-	struct acpi_buffer result, *resultp;
-	union acpi_object out_obj;
+	union acpi_object obj[2];
+	struct acpi_object_list obj_list;
+	acpi_handle handle;
 	acpi_status status;
-	va_list ap;
-	char res_type;
-	int success;
-	int quiet;
+	unsigned long long ret = 0;
 
-	if (!*fmt) {
-		pr_err("acpi_evalf() called with empty format\n");
-		return 0;
-	}
+	obj[0].type = ACPI_TYPE_INTEGER;
+	obj[0].integer.value = feat;
+	obj[1].type = ACPI_TYPE_INTEGER;
+	obj[1].integer.value = cap;
+	obj_list.count = 2;
+	obj_list.pointer = &obj[0];
 
-	if (*fmt == 'q') {
-		quiet = 1;
-		fmt++;
-	} else
-		quiet = 0;
-
-	res_type = *(fmt++);
-
-	params.count = 0;
-	params.pointer = &in_objs[0];
-
-	va_start(ap, fmt);
-	while (*fmt) {
-		char c = *(fmt++);
-		switch (c) {
-		case 'd':	/* int */
-			in_objs[params.count].integer.value = va_arg(ap, int);
-			in_objs[params.count++].type = ACPI_TYPE_INTEGER;
-			break;
-			/* add more types as needed */
-		default:
-			pr_err("acpi_evalf() called with invalid format character '%c'\n",
-			       c);
-			va_end(ap);
-			return 0;
-		}
-	}
-	va_end(ap);
-
-	if (res_type != 'v') {
-		result.length = sizeof(out_obj);
-		result.pointer = &out_obj;
-		resultp = &result;
-	} else
-		resultp = NULL;
-
-	status = acpi_evaluate_object(handle, method, &params, resultp);
-
-	switch (res_type) {
-	case 'd':		/* int */
-		success = (status == AE_OK &&
-			   out_obj.type == ACPI_TYPE_INTEGER);
-		if (success && res)
-			*res = out_obj.integer.value;
-		break;
-	case 'v':		/* void */
-		success = status == AE_OK;
-		break;
-		/* add more types as needed */
-	default:
-		pr_err("acpi_evalf() called with invalid format character '%c'\n",
-		       res_type);
-		return 0;
-	}
-
-	if (!success && !quiet)
-		pr_err("acpi_evalf(%s, %s, ...) failed: %s\n",
-		       method, fmt0, acpi_format_exception(status));
-
-	return success;
+	handle = acpi_device_handle(data->acpi_dev);
+	status = acpi_evaluate_integer(handle, method, &obj_list, &ret);
+	if (ACPI_SUCCESS(status))
+		return ret;
+	return -ENODEV;
 }
 
 static int dasharo_add(struct acpi_device *acpi_dev)
@@ -188,9 +100,10 @@ static int dasharo_add(struct acpi_device *acpi_dev)
 	data->acpi_dev = acpi_dev;
 
 	int count;
-	for (int i = 0; i < DASHARO_TEMPERATURE_MAX; ++i)
-		if (!acpi_evalf(acpi_device_handle(acpi_dev), &count, "GFCP", "dd", 0, i))
-			pr_info("Dasharo temperature type %d, count %d\n", i, count);
+	for (int i = 0; i < DASHARO_TEMPERATURE_MAX; ++i) {
+		count = dasharo_get_feature_cap(data, "GFCP", 0, i);
+		pr_info("Dasharo temperature type %d, count %d\n", i, count);
+	}
 
 	return 0;
 
