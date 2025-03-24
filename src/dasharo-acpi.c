@@ -189,7 +189,7 @@ static int dasharo_add(struct acpi_device *acpi_dev)
 
 	int count;
 	for (int i = 0; i < DASHARO_TEMPERATURE_MAX; ++i)
-		if (!acpi_evalf(gfcp_handle, &count, NULL, "dd", 0, i))
+		if (!acpi_evalf(acpi_device_handle(acpi_dev), &count, "GFCP", "dd", 0, i))
 			pr_info("Dasharo temperature type %d, count %d\n", i, count);
 
 	return 0;
